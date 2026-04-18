@@ -2,6 +2,7 @@ const Flight = require('../models/Flight');
 
 // @desc    Get all flights
 // @route   GET /api/flights
+
 exports.getFlights = async (req, res, next) => {
     try {
         const flights = await Flight.find().populate('from_city to_city');
@@ -10,6 +11,35 @@ exports.getFlights = async (req, res, next) => {
         next(error);
     }
 };
+
+// @desc    Get active flights
+// @route   GET /api/flights/active
+exports.getActiveFlights = async (req, res, next) => {
+    try {
+        const flights = (await Flight.find().populate('from_city to_city')).filter(flight => {
+            // Filter out flights that have already departed
+            return new Date(flight.departure_time) > new Date();
+        });
+        res.status(200).json({ success: true, data: flights });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+exports.getOldFlights = async (req, res, next) => {
+    try {
+        const flights = (await Flight.find().populate('from_city to_city')).filter(flight => {
+            // Filter out flights that have already departed
+            return new Date(flight.departure_time) <= new Date();
+        });
+        res.status(200).json({ success: true, data: flights });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 
 // @desc    Get a single flight by ID
 // @route   GET /api/flights/:id
