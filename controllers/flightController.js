@@ -63,6 +63,21 @@ exports.createFlight = async (req, res, next) => {
         const depTime = new Date(departure_time);
         const arrTime = new Date(arrival_time);
 
+        if (arrTime <= depTime) {
+            return res.status(400).json({ success: false, error: 'Arrival time must be after departure time' });
+        }
+
+        if (price < 0) {
+            return res.status(400).json({ success: false, error: 'Price must be a positive number' });
+        }
+
+        if (seats_available < 0) {
+            return res.status(400).json({ success: false, error: 'No empty seats left' });
+        }
+        if (from_city === to_city) {
+            return res.status(400).json({ success: false, error: 'Departure and arrival cities must be different' });
+        }
+
         // Calculate hour boundaries for departure
         const depStartOfHour = new Date(depTime);
         depStartOfHour.setMinutes(0, 0, 0);
