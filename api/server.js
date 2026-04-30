@@ -3,7 +3,6 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-
 dotenv.config(); // load them env
 
 connectDB(); // connect to the database
@@ -28,6 +27,5 @@ app.use((err, req, res, next) => {
     res.status(500).json({ success: false, message: err.message || 'Server Error' });
 });
 
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Export the Express API for Vercel
+module.exports = app;
