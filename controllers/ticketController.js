@@ -58,7 +58,10 @@ exports.getUserTickets = async (req, res, next) => {
                 }
             });
 
-        res.status(200).json({ success: true, data: tickets });
+        // Filter out tickets where flight details have been deleted
+        const validTickets = tickets.filter(ticket => ticket.flight_id !== null);
+
+        res.status(200).json({ success: true, data: validTickets });
     } catch (error) {
         next(error);
     }
@@ -78,7 +81,10 @@ exports.getAllTickets = async (req, res, next) => {
 
             });
 
-        res.status(200).json({ success: true, data: tickets });
+        // Filter out tickets where flight details have been deleted
+        const validTickets = tickets.filter(ticket => ticket.flight_id !== null);
+
+        res.status(200).json({ success: true, data: validTickets });
     } catch (error) {
         next(error);
     }
