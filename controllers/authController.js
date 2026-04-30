@@ -32,7 +32,8 @@ exports.loginAdmin = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            token
+            token,
+            name: admin.name
         });
     } catch (error) {
         next(error);
@@ -44,11 +45,12 @@ exports.loginAdmin = async (req, res, next) => {
 // @access  Public 
 exports.registerAdmin = async (req, res, next) => {
     try {
-        const { username, password } = req.body;
+        const { username, password, name } = req.body;
 
         const admin = await Admin.create({
             username,
-            password
+            password,
+            name
         });
 
         const token = admin.getSignedJwtToken();
@@ -61,3 +63,6 @@ exports.registerAdmin = async (req, res, next) => {
         next(error);
     }
 };
+
+
+exports.getCurren
