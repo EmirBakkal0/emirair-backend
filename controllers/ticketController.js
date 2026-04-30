@@ -5,6 +5,9 @@ const Flight = require('../models/Flight');
 // @desc    Book a new ticket
 // @route   POST /api/tickets
 // @access  Public
+
+
+
 exports.bookTicket = async (req, res, next) => {
     try {
         const { passenger_name, passenger_surname, passenger_email, flight_id } = req.body;
@@ -19,16 +22,21 @@ exports.bookTicket = async (req, res, next) => {
         if (!flight) {
             return res.status(400).json({ success: false, error: 'Flight not found or no seats available' });
         }
+        seatLetter=String.fromCharCode(65 + (flight.seats_available % 6)); // A-F
+        const seatNumber = `${Math.floor(flight.seats_available / 6) + 1}${seatLetter}`; // e.g., 1A, 1B, ..., 2A, etc.
 
         // Generate a random 6-character ticket ID
         const ticket_id = crypto.randomBytes(3).toString('hex').toUpperCase();
+
 
         const ticket = await Ticket.create({
             ticket_id,
             passenger_name,
             passenger_surname,
             passenger_email,
-            flight_id
+            flight_id,
+            price: flight.price,
+            seat_number: seatNumber
         });
 
         res.status(201).json({ success: true, data: ticket });
@@ -67,6 +75,7 @@ exports.getAllTickets = async (req, res, next) => {
                 populate: {
                     path: 'from_city to_city'
                 }
+
             });
 
         res.status(200).json({ success: true, data: tickets });
