@@ -30,7 +30,7 @@ exports.getActiveFlights = async (req, res, next) => {
 exports.getOldFlights = async (req, res, next) => {
     try {
         const flights = (await Flight.find().populate('from_city to_city')).filter(flight => {
-            // Filter out flights that have already departed
+            // Filter out flights that have not already departed
             return new Date(flight.departure_time) <= new Date();
         });
         res.status(200).json({ success: true, data: flights });
@@ -71,45 +71,42 @@ exports.createFlight = async (req, res, next) => {
             return res.status(400).json({ success: false, error: 'Price must be a positive number' });
         }
 
-        if (seats_available < 0) {
+        if (seats_available <= 0) {
             return res.status(400).json({ success: false, error: 'No empty seats left' });
         }
         if (from_city === to_city) {
             return res.status(400).json({ success: false, error: 'Departure and arrival cities must be different' });
         }
 
-        // Calculate hour boundaries for departure
-        const depStartOfHour = new Date(depTime);
-        depStartOfHour.setMinutes(0, 0, 0);
-        const depEndOfHour = new Date(depStartOfHour);
-        depEndOfHour.setHours(depStartOfHour.getHours() + 1);
+        // Calculate minute boundaries for departure
+        const depStartOfMinute = new Date(depTime);
+        depStartOfMinute.setSeconds(0, 0);
+        const depEndOfMinute = new Date(depStartOfMinute);
+        depEndOfMinute.setMinutes(depStartOfMinute.getMinutes() + 1);
 
-        // Check if another flight departs from 'from_city' at the same hour
+        // Check if another flight departs from 'from_city' at the same minute
         const existingDeparture = await Flight.findOne({
             from_city,
-            departure_time: { $gte: depStartOfHour, $lt: depEndOfHour }
+            departure_time: { $gte: depStartOfMinute, $lt: depEndOfMinute }
         });
 
         if (existingDeparture) {
-            return res.status(400).json({ success: false, error: 'A flight already departs from this city at this hour' });
+            return res.status(400).json({ success: false, error: 'A flight already departs from this city at this minute' });
         }
 
-        // Check if another flight arrives in 'to_city' at the exact same arrival time
-        // Alternatively (if using hour range constraint like departure), use hour boundaries. Let's do exact or same hour. 
-        // Based on prompt: "No two flights can arrive at the same city at the same arrival time." Let's check the same minute/hour. Let's apply an hour boundary logic identically just to be consistent, or an exact match. Let's do exact match based on exact phrasing.
-        // Let's actually do the same hour block for arrivals as well for realism and safety.
-        const arrStartOfHour = new Date(arrTime);
-        arrStartOfHour.setMinutes(0, 0, 0);
-        const arrEndOfHour = new Date(arrStartOfHour);
-        arrEndOfHour.setHours(arrStartOfHour.getHours() + 1);
+        // Calculate minute boundaries for arrival
+        const arrStartOfMinute = new Date(arrTime);
+        arrStartOfMinute.setSeconds(0, 0);
+        const arrEndOfMinute = new Date(arrStartOfMinute);
+        arrEndOfMinute.setMinutes(arrStartOfMinute.getMinutes() + 1);
 
         const existingArrival = await Flight.findOne({
             to_city,
-            arrival_time: { $gte: arrStartOfHour, $lt: arrEndOfHour }
+            arrival_time: { $gte: arrStartOfMinute, $lt: arrEndOfMinute }
         });
 
         if (existingArrival) {
-            return res.status(400).json({ success: false, error: 'A flight already arrives at this city during this hour' });
+            return res.status(400).json({ success: false, error: 'A flight already arrives at this city during this minute' });
         }
 
         const flightData = {
@@ -144,28 +141,28 @@ exports.updateFlight = async (req, res, next) => {
             const depTimeCheck = req.body.departure_time ? new Date(req.body.departure_time) : flight.departure_time;
             const arrTimeCheck = req.body.arrival_time ? new Date(req.body.arrival_time) : flight.arrival_time;
 
-            const depStartOfHour = new Date(depTimeCheck);
-            depStartOfHour.setMinutes(0, 0, 0);
-            const depEndOfHour = new Date(depStartOfHour);
-            depEndOfHour.setHours(depStartOfHour.getHours() + 1);
+            const depStartOfMinute = new Date(depTimeCheck);
+            depStartOfMinute.setSeconds(0, 0);
+            const depEndOfMinute = new Date(depStartOfMinute);
+            depEndOfMinute.setMinutes(depStartOfMinute.getMinutes() + 1);
 
             const existingDeparture = await Flight.findOne({
                 _id: { $ne: id },
                 from_city: fromCityCheck,
-                departure_time: { $gte: depStartOfHour, $lt: depEndOfHour }
+                departure_time: { $gte: depStartOfMinute, $lt: depEndOfMinute }
             });
 
             if (existingDeparture) return res.status(400).json({ success: false, error: 'Departure collision detected' });
 
-            const arrStartOfHour = new Date(arrTimeCheck);
-            arrStartOfHour.setMinutes(0, 0, 0);
-            const arrEndOfHour = new Date(arrStartOfHour);
-            arrEndOfHour.setHours(arrStartOfHour.getHours() + 1);
+            const arrStartOfMinute = new Date(arrTimeCheck);
+            arrStartOfMinute.setSeconds(0, 0);
+            const arrEndOfMinute = new Date(arrStartOfMinute);
+            arrEndOfMinute.setMinutes(arrStartOfMinute.getMinutes() + 1);
 
             const existingArrival = await Flight.findOne({
                 _id: { $ne: id },
                 to_city: toCityCheck,
-                arrival_time: { $gte: arrStartOfHour, $lt: arrEndOfHour }
+                arrival_time: { $gte: arrStartOfMinute, $lt: arrEndOfMinute }
             });
 
             if (existingArrival) return res.status(400).json({ success: false, error: 'Arrival collision detected' });
