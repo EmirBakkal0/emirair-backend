@@ -72,3 +72,10 @@ To seed the database with initial city data, you can run the `seedCities.js` scr
 ```sh
 node scripts/seedCities.js
 ```
+
+## Creatinng admin account
+
+To create admin accounnt run the 'createAdminAcc.js' script. Make sure the server is running.
+```sh
+node scripts/createAdminAcc.js
+```
